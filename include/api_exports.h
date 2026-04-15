@@ -25,4 +25,15 @@ extern "C" {
 
     // 3. Function to destroy the class (prevents memory leaks)
     API_EXPORT void DestroyMathEngine(EngineHandle handle);
+
+    // --- CompressEngine Exports ---
+
+    // 4. Function to create the CompressEngine
+    API_EXPORT EngineHandle CreateCompressEngine();
+
+    // 5. Function to use the CompressEngine
+    API_EXPORT bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath);
+
+    // 6. Function to destroy the CompressEngine
+    API_EXPORT void DestroyCompressEngine(EngineHandle handle);
 }
