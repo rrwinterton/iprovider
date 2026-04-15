@@ -10,4 +10,4 @@ cmake -S . -B %BUILD_DIR% -G Ninja ^
 cmake --build %BUILD_DIR%
 
 echo.
-echo Build complete. Look in the %BUILD_DIR% folder for unmangled_lib.dll
+echo Build complete. Look in the %BUILD_DIR% folder for iprovider.dll

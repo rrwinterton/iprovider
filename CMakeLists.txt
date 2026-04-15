@@ -21,4 +21,4 @@ target_include_directories(iprovider PUBLIC
 
 # Define a macro so the code knows it is BUILDING the DLL, not consuming it.
 # This triggers __declspec(dllexport) instead of __declspec(dllimport).
-target_compile_definitions(iprovider PRIVATE IPROVIDER_DLL_EXPORTS)
+target_compile_definitions(iprovider PRIVATE UNMANGLED_LIB_EXPORTS)
