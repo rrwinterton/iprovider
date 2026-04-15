@@ -16,9 +16,15 @@
 - **Output**: The project produces `iprovider.dll` and `iprovider.lib` in the `build/` directory.
 
 ### Build Commands
-To build the project, run:
+To build the project in Release mode:
 ```powershell
 .\build.bat
+```
+
+To build the project in Debug mode:
+```powershell
+cmake -S . -B build_debug -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
+cmake --build build_debug
 ```
 
 ## Coding Conventions
