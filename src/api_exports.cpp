@@ -1,6 +1,7 @@
 #include "api_exports.h"
 #include "math_engine.h"
 #include "compress_engine.h"
+#include "socwatch_engine.h"
 
 extern "C" {
 
@@ -41,6 +42,26 @@ extern "C" {
     API_EXPORT void DestroyCompressEngine(EngineHandle handle) {
         if (handle) {
             auto* engine = static_cast<CoreEngine::CompressEngine*>(handle);
+            delete engine;
+        }
+    }
+
+    // --- SocwatchEngine Implementation ---
+
+    API_EXPORT EngineHandle CreateSocwatchEngine() {
+        auto* engine = new CoreEngine::SocWatchEngine();
+        return static_cast<EngineHandle>(engine);
+    }
+
+    API_EXPORT const char* SocwatchEngine_Run(EngineHandle handle) {
+        if (!handle) return nullptr;
+        auto* engine = static_cast<CoreEngine::SocWatchEngine*>(handle);
+        return engine->Run();
+    }
+
+    API_EXPORT void DestroySocwatchEngine(EngineHandle handle) {
+        if (handle) {
+            auto* engine = static_cast<CoreEngine::SocWatchEngine*>(handle);
             delete engine;
         }
     }

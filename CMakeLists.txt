@@ -11,6 +11,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Define the DLL target
 add_library(iprovider SHARED
     src/math_engine.cpp
+    src/compress_engine.cpp
+    src/socwatch_engine.cpp
     src/api_exports.cpp
 )
 

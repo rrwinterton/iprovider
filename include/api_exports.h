@@ -36,4 +36,15 @@ extern "C" {
 
     // 6. Function to destroy the CompressEngine
     API_EXPORT void DestroyCompressEngine(EngineHandle handle);
+
+    // --- SocwatchEngine Exports ---
+
+    // 7. Function to create the SocwatchEngine
+    API_EXPORT EngineHandle CreateSocwatchEngine();
+
+    // 8. Function to use the SocwatchEngine
+    API_EXPORT const char* SocwatchEngine_Run(EngineHandle handle);
+
+    // 9. Function to destroy the SocwatchEngine
+    API_EXPORT void DestroySocwatchEngine(EngineHandle handle);
 }

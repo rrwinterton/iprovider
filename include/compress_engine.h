@@ -25,4 +25,4 @@ namespace CoreEngine {
 
         bool CompressFileMapped(const std::wstring& inputFilePath, const std::wstring& outputFilePath);
     };
-}
+} // namespace CoreEngine
