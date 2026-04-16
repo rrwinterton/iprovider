@@ -17,9 +17,9 @@ iprovider/
 │   ├── math_engine.cpp
 │   ├── miniz.c
 │   └── socwatch_engine.cpp
+├── .clang-format
 ├── build.bat
 ├── CMakeLists.txt
-├── exportsinfo.txt
 ├── GEMINI.md
 └── README.md
 ```
