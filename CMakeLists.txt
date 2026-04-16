@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 # Enforce Clang++
 set(CMAKE_CXX_COMPILER "clang++")
 
-project(iProviderDllProject VERSION 1.0.0 LANGUAGES CXX)
+project(iProviderDllProject VERSION 1.0.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,6 +14,7 @@ add_library(iprovider SHARED
     src/compress_engine.cpp
     src/socwatch_engine.cpp
     src/api_exports.cpp
+    src/miniz.c
 )
 
 # Tell the compiler where the headers are

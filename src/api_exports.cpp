@@ -32,11 +32,11 @@ extern "C" {
         return static_cast<EngineHandle>(engine);
     }
 
-    API_EXPORT bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath) {
-        if (!handle || !inputFilePath || !outputFilePath) return false;
+    API_EXPORT bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath, const char* archiveName) {
+        if (!handle || !inputFilePath || !outputFilePath || !archiveName) return false;
         
         auto* engine = static_cast<CoreEngine::CompressEngine*>(handle);
-        return engine->CompressFileMapped(inputFilePath, outputFilePath);
+        return engine->CompressFileMapped(inputFilePath, outputFilePath, archiveName);
     }
 
     API_EXPORT void DestroyCompressEngine(EngineHandle handle) {

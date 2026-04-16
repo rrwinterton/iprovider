@@ -17,6 +17,7 @@ typedef void* EngineHandle;
 
 // The extern "C" block disables C++ name mangling for these functions
 extern "C" {
+    // rrw The Math Engine is for test purposes only and will be removed at some point
     // 1. Function to create the class
     API_EXPORT EngineHandle CreateMathEngine(int multiplier);
 
@@ -32,7 +33,7 @@ extern "C" {
     API_EXPORT EngineHandle CreateCompressEngine();
 
     // 5. Function to use the CompressEngine
-    API_EXPORT bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath);
+    API_EXPORT bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath, const char* archiveName);
 
     // 6. Function to destroy the CompressEngine
     API_EXPORT void DestroyCompressEngine(EngineHandle handle);

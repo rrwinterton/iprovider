@@ -7,7 +7,7 @@ namespace CoreEngine {
     // Class representing the file-mapped compression logic
     class FileMappedCompressor {
     public:
-        FileMappedCompressor(const std::wstring& inputFilePath, const std::wstring& outputFilePath);
+        FileMappedCompressor(const std::wstring& inputFilePath, const std::wstring& outputFilePath, const std::string& archiveName);
         ~FileMappedCompressor() = default;
 
         bool Execute();
@@ -15,6 +15,7 @@ namespace CoreEngine {
     private:
         std::wstring m_inputFilePath;
         std::wstring m_outputFilePath;
+        std::string m_archiveName;
     };
 
     // Main engine class exposed by compress_engine.h
@@ -23,6 +24,6 @@ namespace CoreEngine {
         CompressEngine() = default;
         ~CompressEngine() = default;
 
-        bool CompressFileMapped(const std::wstring& inputFilePath, const std::wstring& outputFilePath);
+        bool CompressFileMapped(const std::wstring& inputFilePath, const std::wstring& outputFilePath, const std::string& archiveName);
     };
 } // namespace CoreEngine

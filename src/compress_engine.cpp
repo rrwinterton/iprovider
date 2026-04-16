@@ -1,10 +1,9 @@
 #include "compress_engine.h"
 #include <windows.h>
-#include <compressapi.h>
+#include "miniz.h"
 #include <iostream>
 #include <vector>
-
-#pragma comment(lib, "Cabinet.lib")
+#include <string>
 
 namespace CoreEngine {
 
@@ -44,25 +43,9 @@ namespace CoreEngine {
         size_t m_fileSize;
     };
 
-    // Helper RAII class for compressor handle
-    class CompressorHandle {
-    public:
-        CompressorHandle(DWORD algorithm) : m_handle(NULL) {
-            CreateCompressor(algorithm, NULL, &m_handle);
-        }
-        ~CompressorHandle() {
-            if (m_handle) CloseCompressor(m_handle);
-        }
-        COMPRESSOR_HANDLE Get() const { return m_handle; }
-        bool IsValid() const { return m_handle != NULL; }
-
-    private:
-        COMPRESSOR_HANDLE m_handle;
-    };
-
     // FileMappedCompressor implementation
-    FileMappedCompressor::FileMappedCompressor(const std::wstring& inputFilePath, const std::wstring& outputFilePath)
-        : m_inputFilePath(inputFilePath), m_outputFilePath(outputFilePath) {}
+    FileMappedCompressor::FileMappedCompressor(const std::wstring& inputFilePath, const std::wstring& outputFilePath, const std::string& archiveName)
+        : m_inputFilePath(inputFilePath), m_outputFilePath(outputFilePath), m_archiveName(archiveName) {}
 
     bool FileMappedCompressor::Execute() {
         MemoryMappedFile input(m_inputFilePath);
@@ -71,49 +54,39 @@ namespace CoreEngine {
             return false;
         }
 
-        CompressorHandle compressor(COMPRESS_ALGORITHM_MSZIP);
-        if (!compressor.IsValid()) {
-            std::cerr << "Failed to create compressor.\n";
+        // Convert wstring output path to string for miniz (which uses char*)
+        std::string outputFilePathStr(m_outputFilePath.begin(), m_outputFilePath.end());
+
+        mz_zip_archive zip_archive;
+        memset(&zip_archive, 0, sizeof(zip_archive));
+
+        if (!mz_zip_writer_init_file(&zip_archive, outputFilePathStr.c_str(), 0)) {
+            std::cerr << "Failed to initialize ZIP writer.\n";
             return false;
         }
 
-        SIZE_T compressedDataSize = 0;
-        // Query required output buffer size
-        if (!Compress(compressor.Get(), input.GetData(), input.GetSize(), NULL, 0, &compressedDataSize)) {
-            if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-                std::cerr << "Failed to query compressed size.\n";
-                return false;
-            }
-        }
-
-        std::vector<BYTE> outBuffer(compressedDataSize);
-        if (!Compress(compressor.Get(), input.GetData(), input.GetSize(), outBuffer.data(), outBuffer.size(), &compressedDataSize)) {
-            std::cerr << "Compression failed.\n";
+        if (!mz_zip_writer_add_mem(&zip_archive, m_archiveName.c_str(), input.GetData(), input.GetSize(), MZ_DEFAULT_COMPRESSION)) {
+            std::cerr << "Failed to add file to ZIP.\n";
+            mz_zip_writer_finalize_archive(&zip_archive);
+            mz_zip_writer_end(&zip_archive);
             return false;
         }
 
-        HANDLE hFileOut = CreateFileW(m_outputFilePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hFileOut == INVALID_HANDLE_VALUE) {
-            std::cerr << "Failed to create output file.\n";
+        if (!mz_zip_writer_finalize_archive(&zip_archive)) {
+            std::cerr << "Failed to finalize ZIP archive.\n";
+            mz_zip_writer_end(&zip_archive);
             return false;
         }
 
-        DWORD bytesWritten = 0;
-        BOOL success = WriteFile(hFileOut, outBuffer.data(), static_cast<DWORD>(compressedDataSize), &bytesWritten, NULL);
-        CloseHandle(hFileOut);
+        mz_zip_writer_end(&zip_archive);
 
-        if (!success) {
-            std::cerr << "Failed to write to output file.\n";
-            return false;
-        }
-
-        std::cout << "Successfully compressed via memory map.\n";
+        std::cout << "Successfully created standard ZIP file via single-file miniz.\n";
         return true;
     }
 
     // CompressEngine implementation
-    bool CompressEngine::CompressFileMapped(const std::wstring& inputFilePath, const std::wstring& outputFilePath) {
-        FileMappedCompressor compressor(inputFilePath, outputFilePath);
+    bool CompressEngine::CompressFileMapped(const std::wstring& inputFilePath, const std::wstring& outputFilePath, const std::string& archiveName) {
+        FileMappedCompressor compressor(inputFilePath, outputFilePath, archiveName);
         return compressor.Execute();
     }
 }
