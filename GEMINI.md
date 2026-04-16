@@ -22,9 +22,15 @@ To build the project in Release mode:
 ```
 
 To build the project in Debug mode:
-```powershell
+```powershell/command prompt
 cmake -S . -B build_debug -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
 cmake --build build_debug
+```
+
+To build the project in Release mode with symbols:
+```powershell/command prompt
+cmake -S . -B build_relwithdebinfo -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build_relwithdebinfo
 ```
 
 ## Coding Conventions

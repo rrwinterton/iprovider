@@ -38,7 +38,7 @@ const char* SocWatchEngine::Run() {
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     m_lastResult += "Successfully launched.";
-    Sleep(10000)
+    Sleep(10000);
   } else {
     m_lastResult += "CreateProcess failed (";
     m_lastResult += std::to_string(GetLastError());
