@@ -14,7 +14,7 @@ const char* SocWatchEngine::Run() {
   ZeroMemory(&pi, sizeof(pi));
 
   // Target executable (make sure to use wide strings or L"")
-  WCHAR cmd[] = L"./socwatch.exe -m -f sys -t 15 -s 5 -o ireport1";
+  WCHAR cmd[] = L"./socwatch.exe -m -f sys -t 11 -s 1 -o ireport1";
 
   // Create the process silently
   BOOL success = CreateProcessW(
@@ -38,6 +38,7 @@ const char* SocWatchEngine::Run() {
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     m_lastResult += "Successfully launched.";
+    Sleep(10000)
   } else {
     m_lastResult += "CreateProcess failed (";
     m_lastResult += std::to_string(GetLastError());
