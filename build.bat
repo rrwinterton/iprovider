@@ -1,10 +1,16 @@
 @echo off
-set BUILD_DIR=build
+set BUILD_TYPE=Release
+if "%1"=="Debug" set BUILD_TYPE=Debug
+if "%1"=="debug" set BUILD_TYPE=Debug
 
-:: Configure with CMake, forcing the Ninja generator and Clang compiler
+set BUILD_DIR=build_%BUILD_TYPE%
+
+echo Building %BUILD_TYPE% version...
+
+:: Configure with CMake
 cmake -S . -B %BUILD_DIR% -G Ninja ^
     -DCMAKE_CXX_COMPILER=clang++ ^
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
 
 :: Build the DLL
 cmake --build %BUILD_DIR%
