@@ -1,9 +1,0 @@
-CompressEngine_CompressFileMapped │ 0x5280 │
-  │ 2       │ CreateCompressEngine              │ 0x5260 │
-  │ 3       │ CreateMathEngine                  │ 0x5140 │
-  │ 4       │ CreateSocwatchEngine              │ 0x53E0 │
-  │ 5       │ DestroyCompressEngine             │ 0x5390 │
-  │ 6       │ DestroyMathEngine                 │ 0x5210 │
-  │ 7       │ DestroySocwatchEngine             │ 0x5470 │
-  │ 8       │ MathEngine_Calculate              │ 0x51C0 │
-  │ 9       │ SocwatchEngine_Run                │ 0x5430 │
