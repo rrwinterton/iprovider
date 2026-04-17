@@ -16,6 +16,7 @@ class SocWatchEngine {
   const char* Run();
 
  private:
+  bool IsFileReady(const std::wstring& filePath);
   std::string m_lastResult;
 };
 

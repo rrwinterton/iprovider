@@ -52,4 +52,24 @@ API_EXPORT const char* SocwatchEngine_Run(EngineHandle handle);
 
 // 9. Function to destroy the SocwatchEngine
 API_EXPORT void DestroySocwatchEngine(EngineHandle handle);
+
+// --- PerfEngine Exports ---
+
+// 10. Function to create the PerfEngine
+API_EXPORT EngineHandle CreatePerfEngine();
+
+// 11. Function to start a trace
+API_EXPORT bool PerfEngine_StartTrace(EngineHandle handle,
+                                      const wchar_t* profileName,
+                                      const wchar_t* profileLevel);
+
+// 12. Function to stop a trace and save to ETL
+API_EXPORT bool PerfEngine_StopTrace(EngineHandle handle,
+                                     const wchar_t* etlFileName);
+
+// 13. Function to check if recording is active
+API_EXPORT bool PerfEngine_IsRecording(EngineHandle handle);
+
+// 14. Function to destroy the PerfEngine
+API_EXPORT void DestroyPerfEngine(EngineHandle handle);
 }

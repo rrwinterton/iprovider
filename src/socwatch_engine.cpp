@@ -4,6 +4,31 @@
 
 namespace CoreEngine {
 
+bool SocWatchEngine::IsFileReady(const std::wstring& filePath) {
+     // Attempt to open the file with NO sharing allowed
+     HANDLE hFile = CreateFileW(
+         filePath.c_str(),
+         GENERIC_READ,    // Access type
+         0,               // dwShareMode = 0 (Exclusive access)
+         NULL,            // Security attributes
+         OPEN_EXISTING,   // Only open if it exists
+         FILE_ATTRIBUTE_NORMAL,
+         NULL
+     );
+
+     if (hFile != INVALID_HANDLE_VALUE) {
+         CloseHandle(hFile); // Success! No other process is holding the file.
+         return true;
+     }
+
+     // If it failed because another process has it open
+     if (GetLastError() == ERROR_SHARING_VIOLATION) {
+         return false;
+     }
+
+     return false; // Other error (e.g., file not found)
+ }
+  
 const char* SocWatchEngine::Run() {
   STARTUPINFOW si;
   PROCESS_INFORMATION pi;
@@ -32,13 +57,12 @@ const char* SocWatchEngine::Run() {
 
   if (success) {
     // Optional: Wait until child process exits
-    // WaitForSingleObject(pi.hProcess, INFINITE);
+    WaitForSingleObject(pi.hProcess, INFINITE);
 
     // Close process and thread handles to prevent memory leaks
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
     m_lastResult += "Successfully launched.";
-    Sleep(10000);
   } else {
     m_lastResult += "CreateProcess failed (";
     m_lastResult += std::to_string(GetLastError());
