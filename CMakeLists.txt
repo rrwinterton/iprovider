@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 
-# Enforce Clang++
-set(CMAKE_CXX_COMPILER "clang++")
+# Enforce Clang++ if not specified
+if(NOT CMAKE_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER "clang++")
+endif()
+if(NOT CMAKE_C_COMPILER)
+    set(CMAKE_C_COMPILER "clang")
+endif()
 
 project(iProviderDllProject VERSION 1.0.0 LANGUAGES CXX C)
 
@@ -18,19 +23,36 @@ add_library(iprovider SHARED
     src/miniz.c
 )
 
+# Robustly find Windows Performance Toolkit
+set(WPT_PATH "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit")
+if(NOT EXISTS "${WPT_PATH}")
+    if(DEFINED ENV{ProgramFiles\(x86\)})
+        set(WPT_PATH "$ENV{ProgramFiles\(x86\)}/Windows Kits/10/Windows Performance Toolkit")
+    endif()
+endif()
+
 # Tell the compiler where the headers are
 target_include_directories(iprovider PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    "C:/Program Files (x86)/Windows Kits/10/Windows Performance Toolkit"
+    "${WPT_PATH}"
 )
 
 # Link required Windows libraries for PerfEngine
-# Using the GUID-based CoCreateInstance means we don't necessarily need a .lib
-# but we link Ole32 and any other needed system libs.
 target_link_libraries(iprovider PRIVATE
     Ole32
     OleAut32
 )
+
+# Warning flags for Clang
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(iprovider PRIVATE -Wall -Wextra)
+endif()
+
+# Debug prints option
+option(ENABLE_DEBUG_PRINTS "Enable debug print statements" OFF)
+if(ENABLE_DEBUG_PRINTS)
+    target_compile_definitions(iprovider PRIVATE DEBUG_PRINTS)
+endif()
 
 # Define a macro so the code knows it is BUILDING the DLL, not consuming it.
 # This triggers __declspec(dllexport) instead of __declspec(dllimport).

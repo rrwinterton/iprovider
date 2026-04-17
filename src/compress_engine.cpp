@@ -63,7 +63,9 @@ FileMappedCompressor::FileMappedCompressor(const std::wstring& inputFilePath,
 bool FileMappedCompressor::Execute() {
   MemoryMappedFile input(m_inputFilePath);
   if (!input.IsValid()) {
+#ifdef DEBUG_PRINTS
     std::cerr << "Failed to map input file.\n";
+#endif
     return false;
   }
 
@@ -75,29 +77,37 @@ bool FileMappedCompressor::Execute() {
   memset(&zip_archive, 0, sizeof(zip_archive));
 
   if (!mz_zip_writer_init_file(&zip_archive, outputFilePathStr.c_str(), 0)) {
+#ifdef DEBUG_PRINTS
     std::cerr << "Failed to initialize ZIP writer.\n";
+#endif
     return false;
   }
 
   if (!mz_zip_writer_add_mem(&zip_archive, m_archiveName.c_str(),
                              input.GetData(), input.GetSize(),
                              MZ_DEFAULT_COMPRESSION)) {
+#ifdef DEBUG_PRINTS
     std::cerr << "Failed to add file to ZIP.\n";
+#endif
     mz_zip_writer_finalize_archive(&zip_archive);
     mz_zip_writer_end(&zip_archive);
     return false;
   }
 
   if (!mz_zip_writer_finalize_archive(&zip_archive)) {
+#ifdef DEBUG_PRINTS
     std::cerr << "Failed to finalize ZIP archive.\n";
+#endif
     mz_zip_writer_end(&zip_archive);
     return false;
   }
 
   mz_zip_writer_end(&zip_archive);
 
+#ifdef DEBUG_PRINTS
   std::cout
       << "Successfully created standard ZIP file via single-file miniz.\n";
+#endif
   return true;
 }
 

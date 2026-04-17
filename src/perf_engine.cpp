@@ -58,6 +58,10 @@ HRESULT PerfEngine::InitializeControlManager() {
 bool PerfEngine::StartTrace(const std::wstring& profileName, const std::wstring& profileLevel) {
     if (m_isRecording) return false;
 
+#ifdef DEBUG_PRINTS
+    std::wcout << L"PerfEngine: Starting trace for profile: " << profileName << L" (" << profileLevel << L")" << std::endl;
+#endif
+
     InitializeControlManager();
 
     // 1. Try wpr.exe first as it is more robust for session management
@@ -68,9 +72,16 @@ bool PerfEngine::StartTrace(const std::wstring& profileName, const std::wstring&
     _wsystem(L"wpr -cancel >nul 2>&1");
     
     if (_wsystem(cmdStart.c_str()) == 0) {
+#ifdef DEBUG_PRINTS
+        std::cout << "PerfEngine: Trace started using wpr.exe" << std::endl;
+#endif
         m_isRecording = true;
         return true;
     }
+
+#ifdef DEBUG_PRINTS
+    std::cout << "PerfEngine: wpr.exe failed, falling back to API" << std::endl;
+#endif
 
     // 2. Fallback to API if wpr.exe failed (e.g. not in PATH)
     if (!m_controlManager) return false;
@@ -116,6 +127,10 @@ bool PerfEngine::StopTrace(const std::wstring& etlFileName) {
         wcscpy_s(fullPath, etlFileName.c_str());
     }
 
+#ifdef DEBUG_PRINTS
+    std::wcout << L"PerfEngine: Stopping trace, saving to: " << fullPath << std::endl;
+#endif
+
     // Ensure the directory exists
     wchar_t drive[_MAX_DRIVE], dir[_MAX_DIR];
     _wsplitpath_s(fullPath, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0);
@@ -125,10 +140,17 @@ bool PerfEngine::StopTrace(const std::wstring& etlFileName) {
     // 1. Try wpr.exe first as it handles merging and session cleanup better
     std::wstring cmdStop = L"wpr -stop \"" + std::wstring(fullPath) + L"\"";
     if (_wsystem(cmdStop.c_str()) == 0) {
+#ifdef DEBUG_PRINTS
+        std::cout << "PerfEngine: Trace stopped using wpr.exe" << std::endl;
+#endif
         m_isRecording = false;
         if (m_activeProfiles) m_activeProfiles.Reset();
         return true;
     }
+
+#ifdef DEBUG_PRINTS
+    std::cout << "PerfEngine: wpr.exe stop failed, falling back to API" << std::endl;
+#endif
 
     // 2. Fallback to API
     if (!m_controlManager) return false;
