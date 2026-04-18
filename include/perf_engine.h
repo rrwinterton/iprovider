@@ -11,6 +11,20 @@ class PerfEngine {
  public:
   PerfEngine();
   ~PerfEngine();
+
+  // Structure to hold performance engine configuration
+  struct Config {
+    bool isStartTrace = false;
+    std::string profileName;
+    std::string profileLevel;
+
+    bool isStopTrace = false;
+    std::string etlFileName;
+  };
+
+  // Parses command line arguments to generate a configuration
+  static Config PerfEngineConfig(int argc, char** argv);
+
   // profileName: e.g., L"GeneralProfile", L"CPU", L"DiskIO"
   // profileLevel: e.g., L"Light", L"Verbose"
   // Returns true if the trace started successfully

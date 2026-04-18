@@ -1,4 +1,5 @@
 #include "api_exports.h"
+#include <cstring>
 #include "compress_engine.h"
 #include "math_engine.h"
 #include "perf_engine.h"
@@ -74,6 +75,25 @@ API_EXPORT void DestroySocwatchEngine(EngineHandle handle) {
 }
 
 // --- PerfEngine Implementation ---
+
+API_EXPORT bool PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig) {
+  if (!outConfig) return false;
+
+  try {
+    CoreEngine::PerfEngine::Config cppConfig = CoreEngine::PerfEngine::PerfEngineConfig(argc, argv);
+    
+    outConfig->isStartTrace = cppConfig.isStartTrace;
+    strncpy_s(outConfig->profileName, cppConfig.profileName.c_str(), _TRUNCATE);
+    strncpy_s(outConfig->profileLevel, cppConfig.profileLevel.c_str(), _TRUNCATE);
+    
+    outConfig->isStopTrace = cppConfig.isStopTrace;
+    strncpy_s(outConfig->etlFileName, cppConfig.etlFileName.c_str(), _TRUNCATE);
+    
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
 
 API_EXPORT EngineHandle CreatePerfEngine() {
   auto* engine = new CoreEngine::PerfEngine();

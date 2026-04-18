@@ -55,21 +55,33 @@ API_EXPORT void DestroySocwatchEngine(EngineHandle handle);
 
 // --- PerfEngine Exports ---
 
-// 10. Function to create the PerfEngine
+// 10. Configuration struct for PerfEngine
+typedef struct {
+    bool isStartTrace;
+    char profileName[256];
+    char profileLevel[256];
+    bool isStopTrace;
+    char etlFileName[260];
+} PerfEngine_Config;
+
+// 11. Function to parse command line arguments for PerfEngine
+API_EXPORT bool PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig);
+
+// 12. Function to create the PerfEngine
 API_EXPORT EngineHandle CreatePerfEngine();
 
-// 11. Function to start a trace
+// 13. Function to start a trace
 API_EXPORT bool PerfEngine_StartTrace(EngineHandle handle,
                                       const wchar_t* profileName,
                                       const wchar_t* profileLevel);
 
-// 12. Function to stop a trace and save to ETL
+// 14. Function to stop a trace and save to ETL
 API_EXPORT bool PerfEngine_StopTrace(EngineHandle handle,
                                      const wchar_t* etlFileName);
 
-// 13. Function to check if recording is active
+// 15. Function to check if recording is active
 API_EXPORT bool PerfEngine_IsRecording(EngineHandle handle);
 
-// 14. Function to destroy the PerfEngine
+// 16. Function to destroy the PerfEngine
 API_EXPORT void DestroyPerfEngine(EngineHandle handle);
 }

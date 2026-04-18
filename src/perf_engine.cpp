@@ -2,6 +2,7 @@
 #include <iostream>
 #include <initguid.h>
 #include <iomanip>
+#include <CLI/CLI.hpp>
 
 // WPR Control API GUIDs
 DEFINE_GUID(CLSID_WPRControl, 0x971A7808, 0x88BE, 0x4AAD, 0x9E, 0x1E, 0x7C, 0x7E, 0x25, 0x85, 0x12, 0xE3);
@@ -23,6 +24,50 @@ typedef HRESULT (WINAPI *WPRCCreateInstanceUnderInstanceNameFunc)(
 );
 
 namespace CoreEngine {
+
+PerfEngine::Config PerfEngine::PerfEngineConfig(int argc, char** argv) {
+    CLI::App app{"Performance Engine Command Line Interface"};
+
+    // Force the user to choose either StartTrace OR StopTrace
+    app.require_subcommand(1);
+
+    PerfEngine::Config config;
+
+    // ==========================================
+    // Subcommand: StartTrace
+    // ==========================================
+    CLI::App* start_cmd = app.add_subcommand("StartTrace", "Start a performance trace");
+
+    start_cmd->add_option("-n,--profileName", config.profileName, "Name of the trace profile")
+             ->required();
+
+    start_cmd->add_option("-l,--profileLevel", config.profileLevel, "Detail level of the profile (e.g., 1-5)")
+             ->required();
+
+    // ==========================================
+    // Subcommand: StopTrace
+    // ==========================================
+    CLI::App* stop_cmd = app.add_subcommand("StopTrace", "Stop an active trace and save the output");
+
+    stop_cmd->add_option("-f,--etlFileName", config.etlFileName, "Output path for the .etl file")
+            ->required();
+
+    // ==========================================
+    // Execution & Error Handling
+    // ==========================================
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError &e) {
+        // This handles incorrect inputs AND prints the --help menu automatically
+        std::exit(app.exit(e));
+    }
+
+    // Determine which command was actually called
+    config.isStartTrace = app.got_subcommand(start_cmd);
+    config.isStopTrace = app.got_subcommand(stop_cmd);
+
+    return config;
+}
 
 PerfEngine::PerfEngine() : m_isRecording(false), m_comInitialized(false) {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
