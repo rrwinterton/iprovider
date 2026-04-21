@@ -23,6 +23,23 @@ class FileMappedCompressor {
 // Main engine class exposed by compress_engine.h
 class CompressEngine {
  public:
+  /**
+   * @brief Structure to hold CompressEngine configuration.
+   */
+  struct Config {
+    std::wstring inputFilePath;
+    std::wstring outputFilePath;
+    std::string archiveName;
+  };
+
+  /**
+   * @brief Parses command line arguments to generate a configuration.
+   * @param argc Argument count.
+   * @param argv Argument vector.
+   * @return Config The parsed configuration.
+   */
+  static Config CompressEngineConfig(int argc, char** argv);
+
   CompressEngine() = default;
   ~CompressEngine() = default;
 

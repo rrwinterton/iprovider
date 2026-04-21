@@ -3,9 +3,37 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <CLI/CLI.hpp>
 #include "miniz.h"
 
 namespace CoreEngine {
+
+CompressEngine::Config CompressEngine::CompressEngineConfig(int argc, char** argv) {
+    CLI::App app{"Compress Engine Command Line Interface"};
+
+    CompressEngine::Config config;
+    std::string inputPath, outputPath;
+
+    app.add_option("-i,--input", inputPath, "Input file path")
+       ->required();
+
+    app.add_option("-o,--output", outputPath, "Output archive file path")
+       ->required();
+
+    app.add_option("-a,--archiveName", config.archiveName, "Name of the file inside the archive")
+       ->required();
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError &e) {
+        throw;
+    }
+
+    config.inputFilePath = std::wstring(inputPath.begin(), inputPath.end());
+    config.outputFilePath = std::wstring(outputPath.begin(), outputPath.end());
+
+    return config;
+}
 
 // Helper RAII class for memory mapping
 class MemoryMappedFile {

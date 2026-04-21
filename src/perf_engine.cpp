@@ -44,6 +44,10 @@ PerfEngine::Config PerfEngine::PerfEngineConfig(int argc, char** argv) {
     start_cmd->add_option("-l,--profileLevel", config.profileLevel, "Detail level of the profile (e.g., 1-5)")
              ->required();
 
+    start_cmd->add_option("-d,--duration", config.duration, "Duration of the trace in seconds (0 for indefinite)");
+
+    start_cmd->add_option("-f,--etlFileName", config.etlFileName, "Output path for the .etl file (used if duration > 0)");
+
     // ==========================================
     // Subcommand: StopTrace
     // ==========================================
@@ -59,7 +63,8 @@ PerfEngine::Config PerfEngine::PerfEngineConfig(int argc, char** argv) {
         app.parse(argc, argv);
     } catch (const CLI::ParseError &e) {
         // This handles incorrect inputs AND prints the --help menu automatically
-        std::exit(app.exit(e));
+        // Throw to allow the C-API to return false
+        throw;
     }
 
     // Determine which command was actually called
@@ -100,57 +105,72 @@ HRESULT PerfEngine::InitializeControlManager() {
     return pFunc(NULL, CLSID_WPRControl, NULL, CLSCTX_INPROC_SERVER, IID_IControlManager, (void**)&m_controlManager);
 }
 
-bool PerfEngine::StartTrace(const std::wstring& profileName, const std::wstring& profileLevel) {
-    if (m_isRecording) return false;
+bool PerfEngine::StartTrace(const std::wstring& profileName, const std::wstring& profileLevel, unsigned int duration, const std::wstring& etlFileName) {
+    if (m_isRecording) {
+        m_lastResult = "Trace already in progress.";
+        return false;
+    }
 
-#ifdef DEBUG_PRINTS
-    std::wcout << L"PerfEngine: Starting trace for profile: " << profileName << L" (" << profileLevel << L")" << std::endl;
-#endif
-
+    m_lastResult = "Starting trace: ";
     InitializeControlManager();
 
-    // 1. Try wpr.exe first as it is more robust for session management
-    std::wstring pName = profileName.empty() ? L"GeneralProfile" : profileName;
-    std::wstring cmdStart = L"wpr -start " + pName + L" -filemode";
+    std::wstring pName = profileName.empty() ? L"CPU" : profileName;
+    std::wstring pLevel = profileLevel.empty() ? L"Light" : profileLevel;
+    
+    // Determine if it's a built-in profile or a .wprp file
+    bool isWprp = (pName.size() >= 5 && pName.substr(pName.size() - 5) == L".wprp");
+    
+    // 1. Try wpr.exe first
+    std::wstring cmdStart = L"wpr -start " + pName;
+    if (!isWprp) {
+        cmdStart += L"." + pLevel;
+    }
+    cmdStart += L" -filemode";
     
     // Attempt to cancel any existing first
     _wsystem(L"wpr -cancel >nul 2>&1");
     
-    if (_wsystem(cmdStart.c_str()) == 0) {
-#ifdef DEBUG_PRINTS
-        std::cout << "PerfEngine: Trace started using wpr.exe" << std::endl;
-#endif
+    int wprResult = _wsystem(cmdStart.c_str());
+    if (wprResult == 0) {
         m_isRecording = true;
+        m_lastResult += "Trace started using wpr.exe";
+        if (duration > 0) {
+            Sleep(duration * 1000);
+            StopTrace(etlFileName);
+        }
         return true;
     }
 
-#ifdef DEBUG_PRINTS
-    std::cout << "PerfEngine: wpr.exe failed, falling back to API" << std::endl;
-#endif
+    m_lastResult += "wpr.exe failed (code " + std::to_string(wprResult) + "), falling back to API. ";
 
-    // 2. Fallback to API if wpr.exe failed (e.g. not in PATH)
-    if (!m_controlManager) return false;
+    // 2. Fallback to API
+    if (!m_controlManager) {
+        m_lastResult += "Control Manager not initialized.";
+        return false;
+    }
 
     HMODULE hWpr = GetModuleHandleW(L"WindowsPerformanceRecorderControl.dll");
     WPRCCreateInstanceUnderInstanceNameFunc pFunc = (WPRCCreateInstanceUnderInstanceNameFunc)GetProcAddress(hWpr, "WPRCCreateInstanceUnderInstanceName");
 
-    if (FAILED(pFunc(NULL, CLSID_CProfileCollection, NULL, CLSCTX_INPROC_SERVER, IID_IProfileCollection2, (void**)&m_activeProfiles))) return false;
+    if (FAILED(pFunc(NULL, CLSID_CProfileCollection, NULL, CLSCTX_INPROC_SERVER, IID_IProfileCollection2, (void**)&m_activeProfiles))) {
+        m_lastResult += "Failed to create ProfileCollection.";
+        return false;
+    }
 
     ComPtr<IProfile2> pProfile;
-    if (FAILED(pFunc(NULL, CLSID_CProfile, NULL, CLSCTX_INPROC_SERVER, IID_IProfile2, (void**)&pProfile))) return false;
+    if (FAILED(pFunc(NULL, CLSID_CProfile, NULL, CLSCTX_INPROC_SERVER, IID_IProfile2, (void**)&pProfile))) {
+        m_lastResult += "Failed to create Profile object.";
+        return false;
+    }
 
-    std::wstring pLevel = profileLevel.empty() ? L"Verbose" : profileLevel;
-    std::wstring fullProfileName = pName + L"." + pLevel + L".Memory";
+    if (!isWprp) {
+        m_lastResult += "API fallback only supports .wprp files. Built-in profile '" + std::string(pName.begin(), pName.end()) + "' cannot be loaded via LoadFromFile.";
+        return false;
+    }
 
-    BSTR bstrPid = SysAllocString(fullProfileName.c_str());
+    BSTR bstrPid = SysAllocString(pName.c_str());
     BSTR bstrEmpty = SysAllocString(L"");
     HRESULT hr = pProfile->LoadFromFile(bstrPid, bstrEmpty);
-    if (FAILED(hr)) {
-        fullProfileName = pName + L"." + pLevel + L".File";
-        SysFreeString(bstrPid);
-        bstrPid = SysAllocString(fullProfileName.c_str());
-        hr = pProfile->LoadFromFile(bstrPid, bstrEmpty);
-    }
     SysFreeString(bstrPid);
     SysFreeString(bstrEmpty);
 
@@ -158,11 +178,17 @@ bool PerfEngine::StartTrace(const std::wstring& profileName, const std::wstring&
         if (SUCCEEDED(m_activeProfiles->Add(pProfile.Get(), VARIANT_TRUE))) {
             if (SUCCEEDED(m_controlManager->Start(m_activeProfiles.Get()))) {
                 m_isRecording = true;
+                m_lastResult += "Trace started using WPR API.";
+                if (duration > 0) {
+                    Sleep(duration * 1000);
+                    StopTrace(etlFileName);
+                }
                 return true;
             }
         }
     }
 
+    m_lastResult += "API fallback failed to start trace (HRESULT: " + std::to_string(hr) + ").";
     return false;
 }
 
@@ -172,9 +198,7 @@ bool PerfEngine::StopTrace(const std::wstring& etlFileName) {
         wcscpy_s(fullPath, etlFileName.c_str());
     }
 
-#ifdef DEBUG_PRINTS
-    std::wcout << L"PerfEngine: Stopping trace, saving to: " << fullPath << std::endl;
-#endif
+    m_lastResult = "Stopping trace: ";
 
     // Ensure the directory exists
     wchar_t drive[_MAX_DRIVE], dir[_MAX_DIR];
@@ -182,28 +206,30 @@ bool PerfEngine::StopTrace(const std::wstring& etlFileName) {
     std::wstring dirPath = std::wstring(drive) + dir;
     if (!dirPath.empty()) CreateDirectoryW(dirPath.c_str(), NULL);
 
-    // 1. Try wpr.exe first as it handles merging and session cleanup better
+    // 1. Try wpr.exe first
     std::wstring cmdStop = L"wpr -stop \"" + std::wstring(fullPath) + L"\"";
     if (_wsystem(cmdStop.c_str()) == 0) {
-#ifdef DEBUG_PRINTS
-        std::cout << "PerfEngine: Trace stopped using wpr.exe" << std::endl;
-#endif
         m_isRecording = false;
+        m_lastResult += "Trace stopped and saved to " + std::string(etlFileName.begin(), etlFileName.end()) + " using wpr.exe";
         if (m_activeProfiles) m_activeProfiles.Reset();
         return true;
     }
 
-#ifdef DEBUG_PRINTS
-    std::cout << "PerfEngine: wpr.exe stop failed, falling back to API" << std::endl;
-#endif
+    m_lastResult += "wpr.exe stop failed, falling back to API. ";
 
     // 2. Fallback to API
-    if (!m_controlManager) return false;
+    if (!m_controlManager) {
+        m_lastResult += "Control Manager not available.";
+        return false;
+    }
 
     if (!m_activeProfiles) {
         m_controlManager->Query(&m_activeProfiles, VARIANT_TRUE);
     }
-    if (!m_activeProfiles) return false;
+    if (!m_activeProfiles) {
+        m_lastResult += "No active profiles found to stop.";
+        return false;
+    }
 
     HMODULE hWpr = GetModuleHandleW(L"WindowsPerformanceRecorderControl.dll");
     WPRCCreateInstanceUnderInstanceNameFunc pFunc = (WPRCCreateInstanceUnderInstanceNameFunc)GetProcAddress(hWpr, "WPRCCreateInstanceUnderInstanceName");
@@ -216,8 +242,12 @@ bool PerfEngine::StopTrace(const std::wstring& etlFileName) {
         if (SUCCEEDED(hr)) {
             m_isRecording = false;
             m_activeProfiles.Reset();
+            m_lastResult += "Trace stopped and saved using WPR API.";
             return true;
         }
+        m_lastResult += "API stop failed (HRESULT: " + std::to_string(hr) + ").";
+    } else {
+        m_lastResult += "Failed to create TraceMergeProperties.";
     }
 
     return false;

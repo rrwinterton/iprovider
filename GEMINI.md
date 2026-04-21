@@ -52,6 +52,36 @@ cmake --build build_relwithdebinfo
 - `src/api_exports.cpp`: Implementation of the C-to-C++ bridge.
 - `build.bat`: Main build entry point.
 
+## C-API Export List
+
+The following functions are exported using `extern "C"` to ensure unmangled names:
+
+### Math Engine
+- `EngineHandle CreateMathEngine(int multiplier)`
+- `int MathEngine_Calculate(EngineHandle handle, int input)`
+- `void DestroyMathEngine(EngineHandle handle)`
+
+### Compress Engine
+- `bool CompressEngine_ParseConfig(int argc, char** argv, CompressEngine_Config* outConfig)`
+- `EngineHandle CreateCompressEngine()`
+- `bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath, const char* archiveName)`
+- `void DestroyCompressEngine(EngineHandle handle)`
+
+### SocWatch Engine
+- `bool SocwatchEngine_ParseConfig(int argc, char** argv, SocwatchEngine_Config* outConfig)`
+- `EngineHandle CreateSocwatchEngine()`
+- `const char* SocwatchEngine_Run(EngineHandle handle, unsigned int durationInSeconds, const char* outputFileName)`
+- `void DestroySocwatchEngine(EngineHandle handle)`
+
+### Perf Engine
+- `bool PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig)`
+- `EngineHandle CreatePerfEngine()`
+- `bool PerfEngine_StartTrace(EngineHandle handle, const wchar_t* profileName, const wchar_t* profileLevel, unsigned int duration, const wchar_t* etlFileName)`
+- `bool PerfEngine_StopTrace(EngineHandle handle, const wchar_t* etlFileName)`
+- `bool PerfEngine_IsRecording(EngineHandle handle)`
+- `const char* PerfEngine_GetLastResult(EngineHandle handle)`
+- `void DestroyPerfEngine(EngineHandle handle)`
+
 ## Integration Context
 
 - **ireporter**: The primary consumer of this instrumentation provider.

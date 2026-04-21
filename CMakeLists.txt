@@ -57,3 +57,15 @@ endif()
 # Define a macro so the code knows it is BUILDING the DLL, not consuming it.
 # This triggers __declspec(dllexport) instead of __declspec(dllimport).
 target_compile_definitions(iprovider PRIVATE UNMANGLED_LIB_EXPORTS)
+
+# --- Tests ---
+add_executable(test_api tests/test_api.cpp)
+target_include_directories(test_api PRIVATE include)
+target_link_libraries(test_api PRIVATE iprovider)
+
+# Ensure the DLL is copied to the same directory as the executable
+add_custom_command(TARGET test_api POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:iprovider>
+        $<TARGET_FILE_DIR:test_api>
+)

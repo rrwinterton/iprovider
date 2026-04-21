@@ -42,3 +42,57 @@ The project uses CMake with a Ninja generator and requires `clang++`.
 ```powershell
 .\build.bat
 ```
+
+## Exported API
+
+The `iprovider.dll` exports a C-compatible (unmangled) API defined in `api_exports.h`.
+
+| Engine | Function | Description |
+| :--- | :--- | :--- |
+| **Math** | `CreateMathEngine(int multiplier)` | Creates a MathEngine instance. |
+| | `MathEngine_Calculate(EngineHandle handle, int input)` | Performs calculation using the engine. |
+| | `DestroyMathEngine(EngineHandle handle)` | Destroys the MathEngine instance. |
+| **Compress** | `CompressEngine_ParseConfig(int argc, char** argv, CompressEngine_Config* outConfig)` | Parses CLI arguments into a config struct. |
+| | `CreateCompressEngine()` | Creates a CompressEngine instance. |
+| | `CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath, const char* archiveName)` | Compresses a file using memory-mapping. |
+| | `DestroyCompressEngine(EngineHandle handle)` | Destroys the CompressEngine instance. |
+| **SocWatch** | `SocwatchEngine_ParseConfig(int argc, char** argv, SocwatchEngine_Config* outConfig)` | Parses CLI arguments into a config struct. |
+| | `CreateSocwatchEngine()` | Creates a SocWatchEngine instance. |
+| | `SocwatchEngine_Run(EngineHandle handle, unsigned int durationInSeconds, const char* outputFileName)` | Runs the SocWatch tool. |
+| | `DestroySocwatchEngine(EngineHandle handle)` | Destroys the SocWatchEngine instance. |
+| **Perf** | `PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig)` | Parses CLI arguments into a config struct. |
+| | `CreatePerfEngine()` | Creates a PerfEngine instance. |
+| | `PerfEngine_StartTrace(EngineHandle handle, const wchar_t* profileName, const wchar_t* profileLevel, unsigned int duration, const wchar_t* etlFileName)` | Starts a performance trace. |
+| | `PerfEngine_StopTrace(EngineHandle handle, const wchar_t* etlFileName)` | Stops a trace and saves to ETL. |
+| | `PerfEngine_IsRecording(EngineHandle handle)` | Checks if a trace is active. |
+| | `PerfEngine_GetLastResult(EngineHandle handle)` | Gets the last result message. |
+| | `DestroyPerfEngine(EngineHandle handle)` | Destroys the PerfEngine instance. |
+
+## CLI Configuration Parsing
+
+The library uses `CLI11` for robust command-line argument validation within the `*_ParseConfig` functions.
+
+### `PerfEngine_ParseConfig`
+Supports two subcommands (exactly one must be provided):
+
+**Subcommand: `StartTrace`**
+- `-n, --profileName` (Required): Name of the trace profile (e.g., `GeneralProfile`, `CPU`).
+- `-l, --profileLevel` (Required): Detail level of the profile (e.g., `Light`, `Verbose`).
+- `-d, --duration` (Optional): Duration in seconds (default: `0` for indefinite).
+- `-f, --etlFileName` (Optional): Output path for the saved `.etl` file (used if duration > 0).
+
+**Subcommand: `StopTrace`**
+- `-f, --etlFileName` (Required): Full output path for the saved `.etl` file.
+
+---
+
+### `SocwatchEngine_ParseConfig`
+- `-d, --duration` (Required): Duration of the SocWatch run in seconds.
+- `-o, --output` (Required): Output CSV file name (without extension).
+
+---
+
+### `CompressEngine_ParseConfig`
+- `-i, --input` (Required): Path to the input file to be compressed.
+- `-o, --output` (Required): Path to the output ZIP archive.
+- `-a, --archiveName` (Required): Name the file will take inside the archive.
