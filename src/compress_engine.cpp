@@ -12,15 +12,16 @@ CompressEngine::Config CompressEngine::CompressEngineConfig(int argc, char** arg
     CLI::App app{"Compress Engine Command Line Interface"};
 
     CompressEngine::Config config;
-    std::string inputPath, outputPath;
+    std::vector<std::string> inputPaths;
+    std::string outputPath;
 
-    app.add_option("-i,--input", inputPath, "Input file path")
+    app.add_option("-i,--input", inputPaths, "Input file paths")
        ->required();
 
     app.add_option("-o,--output", outputPath, "Output archive file path")
        ->required();
 
-    app.add_option("-a,--archiveName", config.archiveName, "Name of the file inside the archive")
+    app.add_option("-a,--archiveName", config.archiveNames, "Names of the files inside the archive")
        ->required();
 
     try {
@@ -29,7 +30,9 @@ CompressEngine::Config CompressEngine::CompressEngineConfig(int argc, char** arg
         throw;
     }
 
-    config.inputFilePath = std::wstring(inputPath.begin(), inputPath.end());
+    for (const auto& path : inputPaths) {
+        config.inputFilePaths.push_back(std::wstring(path.begin(), path.end()));
+    }
     config.outputFilePath = std::wstring(outputPath.begin(), outputPath.end());
 
     return config;
@@ -81,18 +84,17 @@ class MemoryMappedFile {
 };
 
 // FileMappedCompressor implementation
-FileMappedCompressor::FileMappedCompressor(const std::wstring& inputFilePath,
+FileMappedCompressor::FileMappedCompressor(const std::vector<std::wstring>& inputFilePaths,
                                            const std::wstring& outputFilePath,
-                                           const std::string& archiveName)
-    : m_inputFilePath(inputFilePath),
+                                           const std::vector<std::string>& archiveNames)
+    : m_inputFilePaths(inputFilePaths),
       m_outputFilePath(outputFilePath),
-      m_archiveName(archiveName) {}
+      m_archiveNames(archiveNames) {}
 
 bool FileMappedCompressor::Execute() {
-  MemoryMappedFile input(m_inputFilePath);
-  if (!input.IsValid()) {
+  if (m_inputFilePaths.size() != m_archiveNames.size()) {
 #ifdef DEBUG_PRINTS
-    std::cerr << "Failed to map input file.\n";
+    std::cerr << "Mismatch between input files and archive names count.\n";
 #endif
     return false;
   }
@@ -111,15 +113,25 @@ bool FileMappedCompressor::Execute() {
     return false;
   }
 
-  if (!mz_zip_writer_add_mem(&zip_archive, m_archiveName.c_str(),
-                             input.GetData(), input.GetSize(),
-                             MZ_DEFAULT_COMPRESSION)) {
+  for (size_t i = 0; i < m_inputFilePaths.size(); ++i) {
+    MemoryMappedFile input(m_inputFilePaths[i]);
+    if (!input.IsValid()) {
 #ifdef DEBUG_PRINTS
-    std::cerr << "Failed to add file to ZIP.\n";
+      std::wcerr << L"Failed to map input file: " << m_inputFilePaths[i] << L"\n";
 #endif
-    mz_zip_writer_finalize_archive(&zip_archive);
-    mz_zip_writer_end(&zip_archive);
-    return false;
+      continue;
+    }
+
+    if (!mz_zip_writer_add_mem(&zip_archive, m_archiveNames[i].c_str(),
+                               input.GetData(), input.GetSize(),
+                               MZ_DEFAULT_COMPRESSION)) {
+#ifdef DEBUG_PRINTS
+      std::cerr << "Failed to add file to ZIP: " << m_archiveNames[i] << "\n";
+#endif
+      mz_zip_writer_finalize_archive(&zip_archive);
+      mz_zip_writer_end(&zip_archive);
+      return false;
+    }
   }
 
   if (!mz_zip_writer_finalize_archive(&zip_archive)) {
@@ -134,16 +146,16 @@ bool FileMappedCompressor::Execute() {
 
 #ifdef DEBUG_PRINTS
   std::cout
-      << "Successfully created standard ZIP file via single-file miniz.\n";
+      << "Successfully created ZIP archive with multiple files.\n";
 #endif
   return true;
 }
 
 // CompressEngine implementation
-bool CompressEngine::CompressFileMapped(const std::wstring& inputFilePath,
+bool CompressEngine::CompressFileMapped(const std::vector<std::wstring>& inputFilePaths,
                                         const std::wstring& outputFilePath,
-                                        const std::string& archiveName) {
-  FileMappedCompressor compressor(inputFilePath, outputFilePath, archiveName);
+                                        const std::vector<std::string>& archiveNames) {
+  FileMappedCompressor compressor(inputFilePaths, outputFilePath, archiveNames);
   return compressor.Execute();
 }
 }  // namespace CoreEngine

@@ -1,23 +1,24 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace CoreEngine {
 
 // Class representing the file-mapped compression logic
 class FileMappedCompressor {
  public:
-  FileMappedCompressor(const std::wstring& inputFilePath,
+  FileMappedCompressor(const std::vector<std::wstring>& inputFilePaths,
                        const std::wstring& outputFilePath,
-                       const std::string& archiveName);
+                       const std::vector<std::string>& archiveNames);
   ~FileMappedCompressor() = default;
 
   bool Execute();
 
  private:
-  std::wstring m_inputFilePath;
+  std::vector<std::wstring> m_inputFilePaths;
   std::wstring m_outputFilePath;
-  std::string m_archiveName;
+  std::vector<std::string> m_archiveNames;
 };
 
 // Main engine class exposed by compress_engine.h
@@ -27,9 +28,9 @@ class CompressEngine {
    * @brief Structure to hold CompressEngine configuration.
    */
   struct Config {
-    std::wstring inputFilePath;
+    std::vector<std::wstring> inputFilePaths;
     std::wstring outputFilePath;
-    std::string archiveName;
+    std::vector<std::string> archiveNames;
   };
 
   /**
@@ -43,8 +44,8 @@ class CompressEngine {
   CompressEngine() = default;
   ~CompressEngine() = default;
 
-  bool CompressFileMapped(const std::wstring& inputFilePath,
+  bool CompressFileMapped(const std::vector<std::wstring>& inputFilePaths,
                           const std::wstring& outputFilePath,
-                          const std::string& archiveName);
+                          const std::vector<std::string>& archiveNames);
 };
 }  // namespace CoreEngine

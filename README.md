@@ -53,8 +53,9 @@ The `iprovider.dll` exports a C-compatible (unmangled) API defined in `api_expor
 | | `MathEngine_Calculate(EngineHandle handle, int input)` | Performs calculation using the engine. |
 | | `DestroyMathEngine(EngineHandle handle)` | Destroys the MathEngine instance. |
 | **Compress** | `CompressEngine_ParseConfig(int argc, char** argv, CompressEngine_Config* outConfig)` | Parses CLI arguments into a config struct. |
+| | `CompressEngine_FreeConfig(CompressEngine_Config* config)` | Frees memory allocated for the config struct. |
 | | `CreateCompressEngine()` | Creates a CompressEngine instance. |
-| | `CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath, const char* archiveName)` | Compresses a file using memory-mapping. |
+| | `CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t** inputFilePaths, int inputFileCount, const wchar_t* outputFilePath, const char** archiveNames, int archiveNameCount)` | Compresses multiple files using memory-mapping. |
 | | `DestroyCompressEngine(EngineHandle handle)` | Destroys the CompressEngine instance. |
 | **SocWatch** | `SocwatchEngine_ParseConfig(int argc, char** argv, SocwatchEngine_Config* outConfig)` | Parses CLI arguments into a config struct. |
 | | `CreateSocwatchEngine()` | Creates a SocWatchEngine instance. |
@@ -93,6 +94,6 @@ Supports two subcommands (exactly one must be provided):
 ---
 
 ### `CompressEngine_ParseConfig`
-- `-i, --input` (Required): Path to the input file to be compressed.
+- `-i, --input` (Required, Multiple): Paths to the input files to be compressed.
 - `-o, --output` (Required): Path to the output ZIP archive.
-- `-a, --archiveName` (Required): Name the file will take inside the archive.
+- `-a, --archiveName` (Required, Multiple): Names the files will take inside the archive.

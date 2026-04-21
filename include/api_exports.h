@@ -32,22 +32,29 @@ API_EXPORT void DestroyMathEngine(EngineHandle handle);
 
 // 4a. Configuration struct for CompressEngine
 typedef struct {
-    char inputFilePath[260];
+    char** inputFilePaths;
+    int inputFileCount;
     char outputFilePath[260];
-    char archiveName[256];
+    char** archiveNames;
+    int archiveNameCount;
 } CompressEngine_Config;
 
 // 4b. Function to parse command line arguments for CompressEngine
 API_EXPORT bool CompressEngine_ParseConfig(int argc, char** argv, CompressEngine_Config* outConfig);
+
+// 4c. Function to free memory allocated by CompressEngine_ParseConfig
+API_EXPORT void CompressEngine_FreeConfig(CompressEngine_Config* config);
 
 // 4. Function to create the CompressEngine
 API_EXPORT EngineHandle CreateCompressEngine();
 
 // 5. Function to use the CompressEngine
 API_EXPORT bool CompressEngine_CompressFileMapped(EngineHandle handle,
-                                                  const wchar_t* inputFilePath,
+                                                  const wchar_t** inputFilePaths,
+                                                  int inputFileCount,
                                                   const wchar_t* outputFilePath,
-                                                  const char* archiveName);
+                                                  const char** archiveNames,
+                                                  int archiveNameCount);
 
 // 6. Function to destroy the CompressEngine
 API_EXPORT void DestroyCompressEngine(EngineHandle handle);

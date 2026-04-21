@@ -47,14 +47,18 @@ cmake --build build_relwithdebinfo
 ## Key Files
 
 - `CMakeLists.txt`: Project configuration and compiler enforcement.
-- `include/api_exports.h`: The unmangled C-API header (the primary consumer interface).
-- `include/math_engine.h`: Internal C++ engine definition.
-- `src/api_exports.cpp`: Implementation of the C-to-C++ bridge.
 - `build.bat`: Main build entry point.
+- `include/api_exports.h`: The unmangled C-API header (the primary consumer interface).
+- `src/api_exports.cpp`: Implementation of the C-to-C++ bridge.
+- `include/math_engine.h` / `src/math_engine.cpp`: Internal Math engine (for testing).
+- `include/compress_engine.h` / `src/compress_engine.cpp`: Logic for file compression.
+- `include/socwatch_engine.h` / `src/socwatch_engine.cpp`: Power and performance monitoring via SocWatch.
+- `include/perf_engine.h` / `src/perf_engine.cpp`: Performance tracing via Windows Performance Toolkit.
+- `tests/test_api.cpp`: C-API validation and integration tests.
 
 ## C-API Export List
 
-The following functions are exported using `extern "C"` to ensure unmangled names:
+The following functions and types are exported using `extern "C"` to ensure unmangled names:
 
 ### Math Engine
 - `EngineHandle CreateMathEngine(int multiplier)`
@@ -62,18 +66,50 @@ The following functions are exported using `extern "C"` to ensure unmangled name
 - `void DestroyMathEngine(EngineHandle handle)`
 
 ### Compress Engine
+**Configuration Struct:**
+```c
+typedef struct {
+    char** inputFilePaths;
+    int inputFileCount;
+    char outputFilePath[260];
+    char** archiveNames;
+    int archiveNameCount;
+} CompressEngine_Config;
+```
+**Functions:**
 - `bool CompressEngine_ParseConfig(int argc, char** argv, CompressEngine_Config* outConfig)`
+- `void CompressEngine_FreeConfig(CompressEngine_Config* config)`
 - `EngineHandle CreateCompressEngine()`
-- `bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t* inputFilePath, const wchar_t* outputFilePath, const char* archiveName)`
+- `bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t** inputFilePaths, int inputFileCount, const wchar_t* outputFilePath, const char** archiveNames, int archiveNameCount)`
 - `void DestroyCompressEngine(EngineHandle handle)`
 
 ### SocWatch Engine
+**Configuration Struct:**
+```c
+typedef struct {
+    unsigned int duration;
+    char outputFileName[260];
+} SocwatchEngine_Config;
+```
+**Functions:**
 - `bool SocwatchEngine_ParseConfig(int argc, char** argv, SocwatchEngine_Config* outConfig)`
 - `EngineHandle CreateSocwatchEngine()`
 - `const char* SocwatchEngine_Run(EngineHandle handle, unsigned int durationInSeconds, const char* outputFileName)`
 - `void DestroySocwatchEngine(EngineHandle handle)`
 
 ### Perf Engine
+**Configuration Struct:**
+```c
+typedef struct {
+    bool isStartTrace;
+    char profileName[256];
+    char profileLevel[256];
+    unsigned int duration;
+    bool isStopTrace;
+    char etlFileName[260];
+} PerfEngine_Config;
+```
+**Functions:**
 - `bool PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig)`
 - `EngineHandle CreatePerfEngine()`
 - `bool PerfEngine_StartTrace(EngineHandle handle, const wchar_t* profileName, const wchar_t* profileLevel, unsigned int duration, const wchar_t* etlFileName)`
