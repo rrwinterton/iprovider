@@ -28,6 +28,7 @@ class CompressEngine {
    * @brief Structure to hold CompressEngine configuration.
    */
   struct Config {
+    bool doCompress = false;
     std::vector<std::wstring> inputFilePaths;
     std::wstring outputFilePath;
     std::vector<std::string> archiveNames;

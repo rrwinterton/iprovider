@@ -11,10 +11,12 @@ SocWatchEngine::Config SocWatchEngine::SocWatchEngineConfig(int argc, char** arg
 
     SocWatchEngine::Config config;
 
-    app.add_option("-d,--duration", config.duration, "Duration of the SocWatch run in seconds")
+    app.add_flag("--socwatch", config.doSocwatch, "Identify SocWatch operation");
+
+    app.add_option("-d,--sw-duration", config.duration, "Duration of the SocWatch run in seconds")
        ->required();
 
-    app.add_option("-o,--output", config.outputFileName, "Output CSV file name (without extension)")
+    app.add_option("-o,--sw-output", config.outputFileName, "Output CSV file name (without extension)")
        ->required();
 
     try {

@@ -34,6 +34,8 @@ bool CompressEngine_ParseConfig(int argc, char** argv, CompressEngine_Config* ou
     try {
         auto config = CoreEngine::CompressEngine::CompressEngineConfig(argc, argv);
         
+        outConfig->doCompress = config.doCompress;
+
         // Convert output path
         std::string outputStr(config.outputFilePath.begin(), config.outputFilePath.end());
         std::strncpy(outConfig->outputFilePath, outputStr.c_str(), sizeof(outConfig->outputFilePath) - 1);
@@ -117,6 +119,7 @@ bool SocwatchEngine_ParseConfig(int argc, char** argv, SocwatchEngine_Config* ou
     if (!outConfig) return false;
     try {
         auto config = CoreEngine::SocWatchEngine::SocWatchEngineConfig(argc, argv);
+        outConfig->doSocwatch = config.doSocwatch;
         outConfig->duration = config.duration;
         std::strncpy(outConfig->outputFileName, config.outputFileName.c_str(), sizeof(outConfig->outputFileName) - 1);
         outConfig->outputFileName[sizeof(outConfig->outputFileName) - 1] = '\0';
@@ -149,6 +152,8 @@ bool PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig)
     if (!outConfig) return false;
     try {
         auto config = CoreEngine::PerfEngine::PerfEngineConfig(argc, argv);
+        outConfig->perf = config.perf;
+        outConfig->localOnly = config.localOnly;
         outConfig->isStartTrace = config.isStartTrace;
         std::strncpy(outConfig->profileName, config.profileName.c_str(), sizeof(outConfig->profileName) - 1);
         outConfig->profileName[sizeof(outConfig->profileName) - 1] = '\0';
@@ -156,8 +161,8 @@ bool PerfEngine_ParseConfig(int argc, char** argv, PerfEngine_Config* outConfig)
         outConfig->profileLevel[sizeof(outConfig->profileLevel) - 1] = '\0';
         outConfig->duration = config.duration;
         outConfig->isStopTrace = config.isStopTrace;
-        std::strncpy(outConfig->etlFileName, config.etlFileName.c_str(), sizeof(outConfig->etlFileName) - 1);
-        outConfig->etlFileName[sizeof(outConfig->etlFileName) - 1] = '\0';
+        std::strncpy(outConfig->etlFile, config.etlFile.c_str(), sizeof(outConfig->etlFile) - 1);
+        outConfig->etlFile[sizeof(outConfig->etlFile) - 1] = '\0';
         return true;
     } catch (...) {
         return false;
@@ -205,3 +210,29 @@ void DestroyPerfEngine(EngineHandle handle) {
         delete static_cast<CoreEngine::PerfEngine*>(handle);
     }
 }
+
+const IProviderAPI* GetIProviderAPI() {
+    static const IProviderAPI api = {
+        CreateMathEngine,
+        MathEngine_Calculate,
+        DestroyMathEngine,
+        CompressEngine_ParseConfig,
+        CompressEngine_FreeConfig,
+        CreateCompressEngine,
+        CompressEngine_CompressFileMapped,
+        DestroyCompressEngine,
+        SocwatchEngine_ParseConfig,
+        CreateSocwatchEngine,
+        SocwatchEngine_Run,
+        DestroySocwatchEngine,
+        PerfEngine_ParseConfig,
+        CreatePerfEngine,
+        PerfEngine_StartTrace,
+        PerfEngine_StopTrace,
+        PerfEngine_IsRecording,
+        PerfEngine_GetLastResult,
+        DestroyPerfEngine
+    };
+    return &api;
+}
+

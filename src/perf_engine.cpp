@@ -27,11 +27,13 @@ namespace CoreEngine {
 
 PerfEngine::Config PerfEngine::PerfEngineConfig(int argc, char** argv) {
     CLI::App app{"Performance Engine Command Line Interface"};
-
-    // Force the user to choose either StartTrace OR StopTrace
-    app.require_subcommand(1);
+    app.allow_extras();
+    app.fallthrough();
 
     PerfEngine::Config config;
+
+    app.add_flag("--perf", config.perf, "Identify performance operation");
+    app.add_flag("--localOnly", config.localOnly, "Perform local only trace");
 
     // ==========================================
     // Subcommand: StartTrace
@@ -44,16 +46,16 @@ PerfEngine::Config PerfEngine::PerfEngineConfig(int argc, char** argv) {
     start_cmd->add_option("-l,--profileLevel", config.profileLevel, "Detail level of the profile (e.g., 1-5)")
              ->required();
 
-    start_cmd->add_option("-d,--duration", config.duration, "Duration of the trace in seconds (0 for indefinite)");
+    start_cmd->add_option("-d,--perf-duration", config.duration, "Duration of the trace in seconds (0 for indefinite)");
 
-    start_cmd->add_option("-f,--etlFileName", config.etlFileName, "Output path for the .etl file (used if duration > 0)");
+    start_cmd->add_option("-f,--etlFile", config.etlFile, "Output path for the .etl file (used if duration > 0)");
 
     // ==========================================
     // Subcommand: StopTrace
     // ==========================================
     CLI::App* stop_cmd = app.add_subcommand("StopTrace", "Stop an active trace and save the output");
 
-    stop_cmd->add_option("-f,--etlFileName", config.etlFileName, "Output path for the .etl file")
+    stop_cmd->add_option("-f,--etlFile", config.etlFile, "Output path for the .etl file")
             ->required();
 
     // ==========================================

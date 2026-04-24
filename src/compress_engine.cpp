@@ -15,13 +15,15 @@ CompressEngine::Config CompressEngine::CompressEngineConfig(int argc, char** arg
     std::vector<std::string> inputPaths;
     std::string outputPath;
 
-    app.add_option("-i,--input", inputPaths, "Input file paths")
+    app.add_flag("--compress", config.doCompress, "Enable compression");
+
+    app.add_option("-i,--compress-input", inputPaths, "Input file paths")
        ->required();
 
-    app.add_option("-o,--output", outputPath, "Output archive file path")
+    app.add_option("-o,--compress-output", outputPath, "Output archive file path")
        ->required();
 
-    app.add_option("-a,--archiveName", config.archiveNames, "Names of the files inside the archive")
+    app.add_option("-a,--compress-archive", config.archiveNames, "Names of the files inside the archive")
        ->required();
 
     try {

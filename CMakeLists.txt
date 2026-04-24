@@ -69,3 +69,15 @@ add_custom_command(TARGET test_api POST_BUILD
         $<TARGET_FILE:iprovider>
         $<TARGET_FILE_DIR:test_api>
 )
+
+# --- iprovider EXE ---
+add_executable(iprovider_exe src/iprovider_main.cpp)
+set_target_properties(iprovider_exe PROPERTIES OUTPUT_NAME iprovider)
+target_include_directories(iprovider_exe PRIVATE include)
+# We don't link iprovider.lib here because we use LoadLibrary in the code,
+# but we need the DLL to be in the same folder.
+add_custom_command(TARGET iprovider_exe POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:iprovider>
+        $<TARGET_FILE_DIR:iprovider_exe>
+)

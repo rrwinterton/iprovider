@@ -83,7 +83,13 @@ typedef struct {
 - `bool CompressEngine_CompressFileMapped(EngineHandle handle, const wchar_t** inputFilePaths, int inputFileCount, const wchar_t* outputFilePath, const char** archiveNames, int archiveNameCount)`
 - `void DestroyCompressEngine(EngineHandle handle)`
 
-### SocWatch Engine
+**CLI Parameters:**
+- `--compress`: Enable compression.
+- `-i, --compress-input`: Input file paths (multiple).
+- `-o, --compress-output`: Output ZIP path.
+- `-a, --compress-archive`: Archive internal names (multiple).
+
+### Socwatch Engine
 **Configuration Struct:**
 ```c
 typedef struct {
@@ -96,6 +102,12 @@ typedef struct {
 - `EngineHandle CreateSocwatchEngine()`
 - `const char* SocwatchEngine_Run(EngineHandle handle, unsigned int durationInSeconds, const char* outputFileName)`
 - `void DestroySocwatchEngine(EngineHandle handle)`
+
+**CLI Parameters:**
+- `--socwatch`: Identify SocWatch operation.
+- `-d, --sw-duration`: Duration in seconds.
+- `-o, --sw-output`: Output CSV filename.
+
 
 ### Perf Engine
 **Configuration Struct:**
@@ -117,6 +129,14 @@ typedef struct {
 - `bool PerfEngine_IsRecording(EngineHandle handle)`
 - `const char* PerfEngine_GetLastResult(EngineHandle handle)`
 - `void DestroyPerfEngine(EngineHandle handle)`
+
+**CLI Parameters:**
+- `--perf`: Identify performance operation.
+- `--localOnly`: Perform local only trace.
+- `-n, --profileName`: Name of the trace profile.
+- `-l, --profileLevel`: Detail level of the profile.
+- `-d, --perf-duration`: Duration of the trace.
+- `-f, --etlFile`: Output path for the .etl file.
 
 ## Integration Context
 

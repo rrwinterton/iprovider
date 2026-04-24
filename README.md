@@ -77,23 +77,27 @@ The library uses `CLI11` for robust command-line argument validation within the 
 Supports two subcommands (exactly one must be provided):
 
 **Subcommand: `StartTrace`**
+- `--perf` (Optional): Identifies performance operation.
+- `--localOnly` (Optional): Perform local only trace.
 - `-n, --profileName` (Required): Name of the trace profile (e.g., `GeneralProfile`, `CPU`).
 - `-l, --profileLevel` (Required): Detail level of the profile (e.g., `Light`, `Verbose`).
-- `-d, --duration` (Optional): Duration in seconds (default: `0` for indefinite).
-- `-f, --etlFileName` (Optional): Output path for the saved `.etl` file (used if duration > 0).
+- `-d, --perf-duration` (Optional): Duration in seconds (default: `0` for indefinite).
+- `-f, --etlFile` (Optional): Output path for the saved `.etl` file (used if perf-duration > 0).
 
 **Subcommand: `StopTrace`**
-- `-f, --etlFileName` (Required): Full output path for the saved `.etl` file.
+- `-f, --etlFile` (Required): Full output path for the saved `.etl` file.
 
 ---
 
 ### `SocwatchEngine_ParseConfig`
-- `-d, --duration` (Required): Duration of the SocWatch run in seconds.
-- `-o, --output` (Required): Output CSV file name (without extension).
+- `--socwatch` (Optional): Identifies SocWatch operation.
+- `-d, --sw-duration` (Required): Duration of the SocWatch run in seconds.
+- `-o, --sw-output` (Required): Output CSV file name (without extension).
 
 ---
 
 ### `CompressEngine_ParseConfig`
-- `-i, --input` (Required, Multiple): Paths to the input files to be compressed.
-- `-o, --output` (Required): Path to the output ZIP archive.
-- `-a, --archiveName` (Required, Multiple): Names the files will take inside the archive.
+- `--compress` (Optional): Enables compression mode.
+- `-i, --compress-input` (Required, Multiple): Paths to the input files to be compressed.
+- `-o, --compress-output` (Required): Path to the output ZIP archive.
+- `-a, --compress-archive` (Required, Multiple): Names the files will take inside the archive.

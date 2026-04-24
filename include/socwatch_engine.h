@@ -13,6 +13,7 @@ class SocWatchEngine {
    * @brief Structure to hold SocWatch engine configuration.
    */
   struct Config {
+    bool doSocwatch = false;
     unsigned int duration = 0;
     std::string outputFileName;
   };

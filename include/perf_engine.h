@@ -14,11 +14,13 @@ class PerfEngine {
 
   // Structure to hold performance engine configuration
   struct Config {
+    bool perf = false;
+    bool localOnly = false;
     bool isStartTrace = false;
     std::string profileName;
     std::string profileLevel;
     unsigned int duration = 0;
-    std::string etlFileName; // Used by both Start (for auto-stop) and Stop
+    std::string etlFile; // Used by both Start (for auto-stop) and Stop
 
     bool isStopTrace = false;
   };
