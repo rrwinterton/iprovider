@@ -4,6 +4,7 @@
 #include "compress_engine.h"
 #include "socwatch_engine.h"
 #include "perf_engine.h"
+#include "upload_engine.h"
 #include <cstring>
 #include <string>
 #include <vector>
@@ -211,6 +212,56 @@ void DestroyPerfEngine(EngineHandle handle) {
     }
 }
 
+// --- UploadEngine Implementation ---
+
+bool UploadEngine_ParseConfig(int argc, char** argv, UploadEngine_Config* outConfig) {
+    if (!outConfig) return false;
+    try {
+        auto config = CoreEngine::UploadEngine::UploadEngineConfig(argc, argv);
+        outConfig->doUpload = config.doUpload;
+        std::strncpy(outConfig->serverLocation, config.serverLocation.c_str(), sizeof(outConfig->serverLocation) - 1);
+        outConfig->serverLocation[sizeof(outConfig->serverLocation) - 1] = '\0';
+        std::strncpy(outConfig->serverUrl, config.serverUrl.c_str(), sizeof(outConfig->serverUrl) - 1);
+        outConfig->serverUrl[sizeof(outConfig->serverUrl) - 1] = '\0';
+        std::strncpy(outConfig->uploadFile, config.uploadFile.c_str(), sizeof(outConfig->uploadFile) - 1);
+        outConfig->uploadFile[sizeof(outConfig->uploadFile) - 1] = '\0';
+        std::strncpy(outConfig->filePrefix, config.filePrefix.c_str(), sizeof(outConfig->filePrefix) - 1);
+        outConfig->filePrefix[sizeof(outConfig->filePrefix) - 1] = '\0';
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+EngineHandle CreateUploadEngine() {
+    return static_cast<EngineHandle>(new CoreEngine::UploadEngine());
+}
+
+void UploadEngine_SetServerConfig(EngineHandle handle, const char* location, const char* url) {
+    if (handle && location && url) {
+        static_cast<CoreEngine::UploadEngine*>(handle)->SetServerConfig(location, url);
+    }
+}
+
+void UploadEngine_SetUploadPrefix(EngineHandle handle, const char* prefix) {
+    if (handle && prefix) {
+        static_cast<CoreEngine::UploadEngine*>(handle)->SetUploadPrefix(prefix);
+    }
+}
+
+bool UploadEngine_UploadFile(EngineHandle handle, const char* filePath) {
+    if (handle && filePath) {
+        return static_cast<CoreEngine::UploadEngine*>(handle)->UploadFile(filePath);
+    }
+    return false;
+}
+
+void DestroyUploadEngine(EngineHandle handle) {
+    if (handle) {
+        delete static_cast<CoreEngine::UploadEngine*>(handle);
+    }
+}
+
 const IProviderAPI* GetIProviderAPI() {
     static const IProviderAPI api = {
         CreateMathEngine,
@@ -231,7 +282,13 @@ const IProviderAPI* GetIProviderAPI() {
         PerfEngine_StopTrace,
         PerfEngine_IsRecording,
         PerfEngine_GetLastResult,
-        DestroyPerfEngine
+        DestroyPerfEngine,
+        UploadEngine_ParseConfig,
+        CreateUploadEngine,
+        UploadEngine_SetServerConfig,
+        UploadEngine_SetUploadPrefix,
+        UploadEngine_UploadFile,
+        DestroyUploadEngine
     };
     return &api;
 }

@@ -34,6 +34,7 @@ iprovider/
 - **CompressEngine**: Uses `miniz` and Windows memory-mapped files to compress data into ZIP archives.
 - **PerfEngine**: Interfaces with the Windows Performance Recorder (WPR) to start and stop system traces.
 - **SocWatchEngine**: Automates the execution of the Intel SocWatch tool for power and performance analysis.
+- **UploadEngine**: Handles secure file uploads to a remote server using WinHTTP.
 
 ## Building the Project
 
@@ -68,36 +69,71 @@ The `iprovider.dll` exports a C-compatible (unmangled) API defined in `api_expor
 | | `PerfEngine_IsRecording(EngineHandle handle)` | Checks if a trace is active. |
 | | `PerfEngine_GetLastResult(EngineHandle handle)` | Gets the last result message. |
 | | `DestroyPerfEngine(EngineHandle handle)` | Destroys the PerfEngine instance. |
+| **Upload** | `UploadEngine_ParseConfig(int argc, char** argv, UploadEngine_Config* outConfig)` | Parses CLI arguments into a config struct. |
+| | `CreateUploadEngine()` | Creates an UploadEngine instance. |
+| | `UploadEngine_SetServerConfig(EngineHandle handle, const char* location, const char* url)` | Configures the upload server. |
+| | `UploadEngine_SetUploadPrefix(EngineHandle handle, const char* prefix)` | Sets a prefix for the remote filename. |
+| | `UploadEngine_UploadFile(EngineHandle handle, const char* filePath)` | Uploads a file to the server. |
+| | `DestroyUploadEngine(EngineHandle handle)` | Destroys the UploadEngine instance. |
 
-## CLI Configuration Parsing
+## CLI Configuration Parsing (ireporter.exe)
 
-The library uses `CLI11` for robust command-line argument validation within the `*_ParseConfig` functions.
+The library uses `CLI11` for robust command-line argument validation within the `*_ParseConfig` functions. These are intended to be used by the `ireporter.exe` consumer.
 
-### `PerfEngine_ParseConfig`
-Supports two subcommands (exactly one must be provided):
+### Compress Engine
+| Parameter | Short | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--compress` | | Flag | No | Enables the compression operation. |
+| `--compress-input` | `-i` | String | **Yes** | Input file paths (supports multiple entries). |
+| `--compress-output` | `-o` | String | **Yes** | Path for the resulting ZIP archive. |
+| `--compress-archive` | `-a` | String | **Yes** | Internal names for files inside the archive (must match input count). |
+
+Example: `ireporter.exe --compress -i test.txt -o out.zip -a internal.txt`
+
+### Perf Engine
+**Global Flags:**
+| Parameter | Short | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--perf` | | Flag | No | Identifies performance operation. |
+| `--localOnly` | | Flag | No | Perform local only trace. |
 
 **Subcommand: `StartTrace`**
-- `--perf` (Optional): Identifies performance operation.
-- `--localOnly` (Optional): Perform local only trace.
-- `-n, --profileName` (Required): Name of the trace profile (e.g., `GeneralProfile`, `CPU`).
-- `-l, --profileLevel` (Required): Detail level of the profile (e.g., `Light`, `Verbose`).
-- `-d, --perf-duration` (Optional): Duration in seconds (default: `0` for indefinite).
-- `-f, --etlFile` (Optional): Output path for the saved `.etl` file (used if perf-duration > 0).
+| Parameter | Short | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--profileName` | `-n` | String | **Yes** | Name of the trace profile (e.g., `CPU`) or path to a `.wprp` file. |
+| `--profileLevel` | `-l` | String | **Yes** | Detail level (e.g., `Verbose`, `Light`, or `1-5`). |
+| `--perf-duration`| `-d` | Int | No | Duration in seconds (0 for indefinite). |
+| `--etlFile` | `-f` | String | No | Output path (required if duration > 0). |
+
+Example: `ireporter.exe StartTrace --perf -n CPU -l Verbose -d 10 -f results.etl`
 
 **Subcommand: `StopTrace`**
-- `-f, --etlFile` (Required): Full output path for the saved `.etl` file.
+| Parameter | Short | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--etlFile` | `-f` | String | **Yes** | Output path where the trace will be saved. |
 
----
+Example: `ireporter.exe StopTrace -f results.etl`
 
-### `SocwatchEngine_ParseConfig`
-- `--socwatch` (Optional): Identifies SocWatch operation.
-- `-d, --sw-duration` (Required): Duration of the SocWatch run in seconds.
-- `-o, --sw-output` (Required): Output CSV file name (without extension).
+### Socwatch Engine
+| Parameter | Short | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--socwatch` | | Flag | No | Identifies the SocWatch operation. |
+| `--sw-duration` | `-d` | Int | **Yes** | Duration of the run in seconds. |
+| `--sw-output` | `-o` | String | **Yes** | Output CSV filename (**without** extension). |
 
----
+Example: `ireporter.exe --socwatch -d 60 -o power_report`
 
-### `CompressEngine_ParseConfig`
-- `--compress` (Optional): Enables compression mode.
-- `-i, --compress-input` (Required, Multiple): Paths to the input files to be compressed.
-- `-o, --compress-output` (Required): Path to the output ZIP archive.
-- `-a, --compress-archive` (Required, Multiple): Names the files will take inside the archive.
+### Upload Engine
+| Parameter | Short | Type | Required | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `--upload` | | Flag | No | Identifies the upload operation. |
+| `--upload-location` | `-l` | String | **Yes** | Server location (e.g., `myserver.com`). |
+| `--upload-url` | `-u` | String | **Yes** | Server URL path (e.g., `/api/upload`). |
+| `--upload-file` | `-f` | String | **Yes** | Path to the file to upload (**Validation: Must exist**). |
+| `--upload-prefix` | `-p` | String | No | Prefix for the remote filename (default: `iprovider`). |
+
+Example: `ireporter.exe --upload -l example.com -u /upload -f report.zip -p MyReport`
+
+**Filename Generation:**
+The engine generates a unique remote filename using: `{prefix}_{timestamp}_{original_filename}`.
+This value is sent to the server in the `X-Original-Filename` HTTP header.

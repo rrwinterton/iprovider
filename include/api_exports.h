@@ -121,6 +121,35 @@ API_EXPORT const char* PerfEngine_GetLastResult(EngineHandle handle);
 // 22. Function to destroy the PerfEngine
 API_EXPORT void DestroyPerfEngine(EngineHandle handle);
 
+// --- UploadEngine Exports ---
+
+// 23a. Configuration struct for UploadEngine
+typedef struct {
+    bool doUpload;
+    char serverLocation[260];
+    char serverUrl[260];
+    char uploadFile[260];
+    char filePrefix[260];
+} UploadEngine_Config;
+
+// 23b. Function to parse command line arguments for UploadEngine
+API_EXPORT bool UploadEngine_ParseConfig(int argc, char** argv, UploadEngine_Config* outConfig);
+
+// 23. Function to create the UploadEngine
+API_EXPORT EngineHandle CreateUploadEngine();
+
+// 24. Function to configure the server
+API_EXPORT void UploadEngine_SetServerConfig(EngineHandle handle, const char* location, const char* url);
+
+// 24b. Function to set the upload prefix
+API_EXPORT void UploadEngine_SetUploadPrefix(EngineHandle handle, const char* prefix);
+
+// 25. Function to upload a file
+API_EXPORT bool UploadEngine_UploadFile(EngineHandle handle, const char* filePath);
+
+// 26. Function to destroy the UploadEngine
+API_EXPORT void DestroyUploadEngine(EngineHandle handle);
+
 // --- Dynamic Loading API ---
 
 typedef struct {
@@ -150,6 +179,14 @@ typedef struct {
     bool (*PerfEngine_IsRecording)(EngineHandle handle);
     const char* (*PerfEngine_GetLastResult)(EngineHandle handle);
     void (*DestroyPerfEngine)(EngineHandle handle);
+
+    // Upload Engine
+    bool (*UploadEngine_ParseConfig)(int argc, char** argv, UploadEngine_Config* outConfig);
+    EngineHandle (*CreateUploadEngine)();
+    void (*UploadEngine_SetServerConfig)(EngineHandle handle, const char* location, const char* url);
+    void (*UploadEngine_SetUploadPrefix)(EngineHandle handle, const char* prefix);
+    bool (*UploadEngine_UploadFile)(EngineHandle handle, const char* filePath);
+    void (*DestroyUploadEngine)(EngineHandle handle);
 } IProviderAPI;
 
 // Function to retrieve the API structure

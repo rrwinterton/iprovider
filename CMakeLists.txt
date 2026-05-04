@@ -19,6 +19,7 @@ add_library(iprovider SHARED
     src/compress_engine.cpp
     src/socwatch_engine.cpp
     src/perf_engine.cpp
+    src/upload_engine.cpp
     src/api_exports.cpp
     src/miniz.c
 )
@@ -37,10 +38,11 @@ target_include_directories(iprovider PUBLIC
     "${WPT_PATH}"
 )
 
-# Link required Windows libraries for PerfEngine
+# Link required Windows libraries for PerfEngine and UploadEngine
 target_link_libraries(iprovider PRIVATE
     Ole32
     OleAut32
+    WinHttp
 )
 
 # Warning flags for Clang
@@ -70,14 +72,14 @@ add_custom_command(TARGET test_api POST_BUILD
         $<TARGET_FILE_DIR:test_api>
 )
 
-# --- iprovider EXE ---
-add_executable(iprovider_exe src/iprovider_main.cpp)
-set_target_properties(iprovider_exe PROPERTIES OUTPUT_NAME iprovider)
-target_include_directories(iprovider_exe PRIVATE include)
+# --- ireporter EXE ---
+add_executable(ireporter_exe src/iprovider_main.cpp)
+set_target_properties(ireporter_exe PROPERTIES OUTPUT_NAME ireporter)
+target_include_directories(ireporter_exe PRIVATE include)
 # We don't link iprovider.lib here because we use LoadLibrary in the code,
 # but we need the DLL to be in the same folder.
-add_custom_command(TARGET iprovider_exe POST_BUILD
+add_custom_command(TARGET ireporter_exe POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:iprovider>
-        $<TARGET_FILE_DIR:iprovider_exe>
+        $<TARGET_FILE_DIR:ireporter_exe>
 )

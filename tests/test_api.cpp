@@ -60,6 +60,27 @@ void test_parse_config() {
 
     CompressEngine_FreeConfig(&config);
     std::cout << "ParseConfig test passed!" << std::endl;
+
+    std::cout << "\nTesting UploadEngine_ParseConfig..." << std::endl;
+    // Create a dummy file to satisfy CLI::ExistingFile
+    {
+        std::ofstream f("upload_test.txt");
+        f << "test data";
+    }
+
+    const char* upload_argv[] = { "iprovider.dll", "--upload", "--upload-location", "example.com", "--upload-url", "/api/upload", "--upload-file", "upload_test.txt" };
+    int upload_argc = sizeof(upload_argv) / sizeof(upload_argv[0]);
+
+    UploadEngine_Config upload_config;
+    success = UploadEngine_ParseConfig(upload_argc, (char**)upload_argv, &upload_config);
+
+    assert(success);
+    assert(upload_config.doUpload == true);
+    assert(std::string(upload_config.serverLocation) == "example.com");
+    assert(std::string(upload_config.serverUrl) == "/api/upload");
+    assert(std::string(upload_config.uploadFile) == "upload_test.txt");
+
+    std::cout << "UploadEngine ParseConfig test passed!" << std::endl;
 }
 
 int main() {
